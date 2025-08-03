@@ -6,11 +6,13 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+# Configuración de la base de datos (Render + Supabase)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres.glpdduiyfjmhelanflvr:Gar38755522@aws-0-us-east-2.pooler.supabase.com:6543/postgres'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+# Modelo
 class Cliente(db.Model):
     __tablename__ = 'clientes'
     id = db.Column(db.Integer, primary_key=True)
@@ -32,10 +34,14 @@ class Cliente(db.Model):
             "servicio": self.servicio
         }
 
+# Rutas
 @app.route('/clientes', methods=['GET'])
 def get_clientes():
-    clientes = Cliente.query.all()
-    return jsonify([c.to_dict() for c in clientes])
+    try:
+        clientes = Cliente.query.all()
+        return jsonify([c.to_dict() for c in clientes])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/clientes', methods=['POST'])
 def registrar_cliente():
@@ -59,5 +65,6 @@ def cancelar_servicio():
 def index():
     return "API de clientes corriendo correctamente."
 
+# Inicio del servidor
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
