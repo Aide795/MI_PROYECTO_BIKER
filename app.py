@@ -6,7 +6,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-# Configuración de la base de datos (Render + Supabase)
+# Configuración de la base de datos
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres.glpdduiyfjmhelanflvr:Gar38755522@aws-0-us-east-2.pooler.supabase.com:6543/postgres'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -45,6 +45,8 @@ def get_clientes():
 
 @app.route('/clientes', methods=['POST'])
 def registrar_cliente():
+    if not request.is_json:
+        return jsonify({"mensaje": "Contenido debe ser JSON"}), 415
     data = request.get_json()
     nuevo = Cliente(**data)
     db.session.add(nuevo)
@@ -53,6 +55,8 @@ def registrar_cliente():
 
 @app.route('/clientes', methods=['DELETE'])
 def cancelar_servicio():
+    if not request.is_json:
+        return jsonify({"mensaje": "Contenido debe ser JSON"}), 415
     data = request.get_json()
     cliente = Cliente.query.filter_by(email=data['email'], servicio=data['servicio']).first()
     if cliente:
