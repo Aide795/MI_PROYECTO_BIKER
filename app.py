@@ -1,74 +1,90 @@
-import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
+# Inicialización de la app Flask
 app = Flask(__name__)
 CORS(app)
 
-# Configuración de la base de datos
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres.glpdduiyfjmhelanflvr:Gar38755522@aws-0-us-east-2.pooler.supabase.com:6543/postgres'
+# 🔧 Conexión a MySQL local (XAMPP)
+# Asegúrate de tener creada la base de datos 'bikertapizados' en phpMyAdmin
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/bikertapizados'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Modelo
-class Cliente(db.Model):
-    __tablename__ = 'clientes'
+# 🧱 Modelo de la tabla Servicio
+class Servicio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100))
-    email = db.Column(db.String(100))
-    telefono = db.Column(db.String(50))
-    ciudad = db.Column(db.String(50))
-    pais = db.Column(db.String(50))
-    servicio = db.Column(db.String(50))
+    modelo = db.Column(db.String(100))
+    precio = db.Column(db.Float)
+    estado = db.Column(db.String(20), default="Activo")
 
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "nombre": self.nombre,
-            "email": self.email,
-            "telefono": self.telefono,
-            "ciudad": self.ciudad,
-            "pais": self.pais,
-            "servicio": self.servicio
-        }
+# Crear tablas si no existen
+with app.app_context():
+    db.create_all()
 
-# Rutas
-@app.route('/clientes', methods=['GET'])
-def get_clientes():
-    try:
-        clientes = Cliente.query.all()
-        return jsonify([c.to_dict() for c in clientes])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+# 🧭 Ruta principal
+@app.route('/')
+def home():
+    return """
+    <h2 style='text-align:center'>API Biker Tapizados</h2>
+    <p style='text-align:center'>Usa las rutas /api/servicios para interactuar</p>
+    """
 
-@app.route('/clientes', methods=['POST'])
-def registrar_cliente():
-    if not request.is_json:
-        return jsonify({"mensaje": "Contenido debe ser JSON"}), 415
+# 🧭 Ruta para listar servicios
+@app.route('/api/servicios', methods=['GET'])
+def listar_servicios():
+    servicios = Servicio.query.all()
+    data = []
+    for s in servicios:
+        data.append({
+            'id': s.id,
+            'nombre': s.nombre,
+            'modelo': s.modelo,
+            'precio': s.precio,
+            'estado': s.estado
+        })
+    return jsonify(data)
+
+# 🧩 Ruta para crear un servicio
+@app.route('/api/servicios', methods=['POST'])
+def crear_servicio():
     data = request.get_json()
-    nuevo = Cliente(**data)
+    nuevo = Servicio(
+        nombre=data['nombre'],
+        modelo=data['modelo'],
+        precio=data['precio']
+    )
     db.session.add(nuevo)
     db.session.commit()
-    return jsonify({"mensaje": "Cliente registrado", "cliente": nuevo.to_dict()}), 201
+    return jsonify({'mensaje': 'Servicio creado exitosamente'})
 
-@app.route('/clientes', methods=['DELETE'])
-def cancelar_servicio():
-    if not request.is_json:
-        return jsonify({"mensaje": "Contenido debe ser JSON"}), 415
+# ✏️ Ruta para actualizar un servicio
+@app.route('/api/servicios/<int:id>', methods=['PUT'])
+def actualizar_servicio(id):
     data = request.get_json()
-    cliente = Cliente.query.filter_by(email=data['email'], servicio=data['servicio']).first()
-    if cliente:
-        db.session.delete(cliente)
-        db.session.commit()
-        return jsonify({"mensaje": "Servicio cancelado correctamente"}), 200
-    return jsonify({"mensaje": "No se encontró el servicio con ese correo"}), 404
+    servicio = Servicio.query.get(id)
+    if not servicio:
+        return jsonify({'error': 'Servicio no encontrado'})
+    servicio.nombre = data.get('nombre', servicio.nombre)
+    servicio.modelo = data.get('modelo', servicio.modelo)
+    servicio.precio = data.get('precio', servicio.precio)
+    servicio.estado = data.get('estado', servicio.estado)
+    db.session.commit()
+    return jsonify({'mensaje': 'Servicio actualizado'})
 
-@app.route('/')
-def index():
-    return "API de clientes corriendo correctamente."
+# ❌ Ruta para eliminar un servicio
+@app.route('/api/servicios/<int:id>', methods=['DELETE'])
+def eliminar_servicio(id):
+    servicio = Servicio.query.get(id)
+    if not servicio:
+        return jsonify({'error': 'Servicio no encontrado'})
+    db.session.delete(servicio)
+    db.session.commit()
+    return jsonify({'mensaje': 'Servicio eliminado'})
 
-# Inicio del servidor
+# 🚀 Ejecutar servidor
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(debug=True, port=5000)

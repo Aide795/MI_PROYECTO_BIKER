@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Servicios - Biker Tapizados</title>
+
+<!-- Íconos y estilo general -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+body {
+  background-color: #121212;
+  color: white;
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+h2 { text-align: center; margin-top: 10px; color: #00e676; }
+
+.tabs {
+  display: flex;
+  justify-content: space-around;
+  background: #1e1e1e;
+  border-bottom: 2px solid #00e676;
+}
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #aaa;
+}
+.tab.active {
+  color: #00e676;
+  border-bottom: 3px solid #00e676;
+}
+.section {
+  display: none;
+  padding: 20px;
+}
+.section.active { display: block; }
+
+.form-container {
+  background: #1e1e1e;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 420px;
+  margin: 0 auto;
+  box-shadow: 0 0 10px #00e67633;
+}
+.input-wrapper {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+.input-wrapper i {
+  color: #00e676;
+  margin-right: 10px;
+}
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: #2b2b2b;
+  color: white;
+}
+button {
+  width: 100%;
+  padding: 10px;
+  background: #00e676;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:hover { background: #00c853; }
+
+/* Snackbar */
+#snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  background-color: #00e676;
+  color: #000;
+  text-align: center;
+  border-radius: 5px;
+  padding: 14px;
+  position: fixed;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+#snackbar.show {
+  visibility: visible;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+</style>
+</head>
+
+<body>
+<h2>Gestión de Servicios - Biker Tapizados</h2>
+
+<div class="tabs">
+  <div class="tab active" onclick="openTab('registrar')"><i class="material-icons">add_circle</i> Registrar</div>
+  <div class="tab" onclick="openTab('solicitar')"><i class="material-icons">build_circle</i> Solicitar</div>
+  <div class="tab" onclick="openTab('cancelar')"><i class="material-icons">cancel</i> Cancelar</div>
+  <div class="tab" onclick="openTab('consultar')"><i class="material-icons">search</i> Consultar</div>
+</div>
+
+<!-- REGISTRAR -->
+<div id="registrar" class="section active">
+  <div class="form-container">
+    <div class="input-wrapper"><i class="material-icons">person</i><input id="rName" placeholder="Nombre completo"></div>
+    <div class="input-wrapper"><i class="material-icons">email</i><input id="rEmail" placeholder="Correo electrónico"></div>
+    <div class="input-wrapper"><i class="material-icons">phone</i><input id="rPhone" placeholder="Teléfono"></div>
+    <div class="input-wrapper"><i class="material-icons">location_city</i><input id="rCity" placeholder="Ciudad"></div>
+    <div class="input-wrapper">
+      <i class="material-icons">miscellaneous_services</i>
+      <select id="rService">
+        <option value="">Seleccione servicio</option>
+        <option value="Tapizado Personalizado">Tapizado Personalizado</option>
+        <option value="Servicio al cliente">Servicio al cliente</option>
+        <option value="Reparación Silla">Reparación Silla</option>
+        <option value="Consulta General">Consulta General</option>
+      </select>
+    </div>
+    <button onclick="registrarServicio()">Registrar</button>
+  </div>
+</div>
+
+<!-- SOLICITAR -->
+<div id="solicitar" class="section">
+  <div class="form-container">
+    <div class="input-wrapper"><i class="material-icons">person</i><input id="sName" placeholder="Nombre completo"></div>
+    <div class="input-wrapper"><i class="material-icons">email</i><input id="sEmail" placeholder="Correo electrónico"></div>
+    <div class="input-wrapper"><i class="material-icons">phone</i><input id="sPhone" placeholder="Teléfono"></div>
+    <div class="input-wrapper"><i class="material-icons">location_city</i><input id="sCity" placeholder="Ciudad"></div>
+    <div class="input-wrapper"><i class="material-icons">add_task</i><input id="sNewService" placeholder="Nuevo servicio solicitado"></div>
+    <button onclick="solicitarAdicional()">Solicitar</button>
+  </div>
+</div>
+
+<!-- CANCELAR -->
+<div id="cancelar" class="section">
+  <div class="form-container">
+    <div class="input-wrapper"><i class="material-icons">email</i><input id="cEmail" placeholder="Correo electrónico"></div>
+    <div class="input-wrapper">
+      <i class="material-icons">miscellaneous_services</i>
+      <select id="cService">
+        <option value="">Seleccione servicio</option>
+        <option value="Tapizado Personalizado">Tapizado Personalizado</option>
+        <option value="Servicio al cliente">Servicio al cliente</option>
+        <option value="Reparación Silla">Reparación Silla</option>
+        <option value="Consulta General">Consulta General</option>
+      </select>
+    </div>
+    <div class="input-wrapper"><i class="material-icons">comment</i><textarea id="cReason" placeholder="Motivo de cancelación"></textarea></div>
+    <button onclick="cancelarServicio()">Cancelar</button>
+  </div>
+</div>
+
+<!-- CONSULTAR -->
+<div id="consultar" class="section">
+  <div class="form-container">
+    <div class="input-wrapper"><i class="material-icons">email</i><input id="qEmail" placeholder="Correo electrónico"></div>
+    <button onclick="consultarServicios()">Consultar</button>
+    <div id="resultadoConsulta" style="margin-top:15px; font-size:14px;"></div>
+  </div>
+</div>
+
+<!-- Snackbar -->
+<div id="snackbar"></div>
+
+<script>
+const API = "http://localhost:5000";
+
+function openTab(tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.tab[onclick="openTab('${tabId}')"]`).classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+function showSnackbar(msg, error=false) {
+  const sb = document.getElementById("snackbar");
+  sb.textContent = msg;
+  sb.style.background = error ? "#ff5252" : "#00e676";
+  sb.className = "show";
+  setTimeout(() => sb.className = sb.className.replace("show", ""), 3000);
+}
+
+async function registrarServicio() {
+  const data = {
+    fullName: rName.value,
+    email: rEmail.value,
+    phone: rPhone.value,
+    city: rCity.value,
+    serviceType: rService.value
+  };
+  const res = await fetch(`${API}/registrar`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  const json = await res.json();
+  showSnackbar(json.message);
+}
+
+async function solicitarAdicional() {
+  const data = {
+    fullName: sName.value,
+    email: sEmail.value,
+    phone: sPhone.value,
+    city: sCity.value,
+    newService: sNewService.value
+  };
+  const res = await fetch(`${API}/solicitar`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  const json = await res.json();
+  showSnackbar(json.message);
+}
+
+async function cancelarServicio() {
+  const data = {
+    email: cEmail.value,
+    serviceType: cService.value,
+    reason: cReason.value
+  };
+  const res = await fetch(`${API}/cancelar`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  const json = await res.json();
+  showSnackbar(json.message);
+}
+
+async function consultarServicios() {
+  const correo = qEmail.value;
+  const res = await fetch(`${API}/consultar/${correo}`);
+  const json = await res.json();
+  let html = "<h4>Servicios:</h4>";
+  if (json.servicios.length === 0) html += "<p>No hay servicios registrados.</p>";
+  else json.servicios.forEach(s => {
+    html += `<p>🛠️ ${s.servicio} - Estado: <b>${s.estado}</b> - Fecha: ${s.fecha_registro}</p>`;
+  });
+  html += "<h4>Cancelaciones:</h4>";
+  if (json.cancelaciones.length === 0) html += "<p>No hay cancelaciones.</p>";
+  else json.cancelaciones.forEach(c => {
+    html += `<p>❌ ${c.servicio} - Motivo: ${c.motivo} - Fecha: ${c.fecha_cancelacion}</p>`;
+  });
+  resultadoConsulta.innerHTML = html;
+}
+</script>
+</body>
+</html>
